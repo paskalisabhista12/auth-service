@@ -21,6 +21,7 @@ type AuthService interface {
 	Register(req requestDTO.RegisterRequest) error
 	Login(email, password string) (string, error)
 	Verify(authToken string) (string, error)
+	Logout(authToken string) error
 }
 
 type authService struct {
@@ -119,7 +120,7 @@ func (s *authService) Verify(authToken string) (string, error) {
 	}
 
 	secret := config.LoadConfig().JwtSecret
-	_, err := VerifyToken(authToken, secret)
+	_, err := verifyToken(authToken, secret)
 	if err != nil {
 		return "", err
 	}
@@ -132,7 +133,31 @@ func (s *authService) Verify(authToken string) (string, error) {
 	return data, nil
 }
 
-func VerifyToken(tokenString string, secret string) (jwt.MapClaims, error) {
+func (s *authService) Logout(authToken string) error {
+	authToken = strings.TrimSpace(authToken)
+	if authToken == "" {
+		return exception.NewUnauthorizedBusinessException("Authorization token is required")
+	}
+
+	secret := config.LoadConfig().JwtSecret
+	_, err := verifyToken(authToken, secret)
+	if err != nil {
+		return err
+	}
+
+	deleted, err := redis.Rdb.Del(redis.Ctx, authToken).Result()
+	if err != nil {
+		return exception.NewInternal("Failed to delete token")
+	}
+
+	if deleted == 0 {
+		return exception.NewNotFound("Token not found")
+	}
+
+	return nil
+}
+
+func verifyToken(tokenString string, secret string) (jwt.MapClaims, error) {
 	// Parse token
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		// Make sure the signing method is HMAC

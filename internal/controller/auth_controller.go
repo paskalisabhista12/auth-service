@@ -31,6 +31,7 @@ func (ac *AuthController) RegisterRoutes(r *gin.RouterGroup) {
 		authGroup.POST("/register", ac.Register)
 		authGroup.POST("/login", ac.Login)
 		authGroup.GET("/verify", ac.Verify)
+		authGroup.POST("/logout", ac.Logout)
 	}
 }
 
@@ -97,4 +98,28 @@ func (ac *AuthController) Verify(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusOK, gin.H{"user": userResponse}, "Token is valid")
+}
+
+func (ac *AuthController) Logout(c *gin.Context) {
+	authHeader := c.GetHeader("Authorization")
+
+	if authHeader == "" {
+		c.Error(exception.ErrBadRequest)
+		return
+	}
+
+	parts := strings.SplitN(authHeader, " ", 2)
+	if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
+		c.Error(exception.NewUnauthorizedBusinessException("Invalid authorization header format"))
+		return
+	}
+	token := parts[1]
+
+	err := ac.authService.Logout(token)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	response.Success(c, http.StatusOK, nil, "Logout success")
 }
