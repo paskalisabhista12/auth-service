@@ -33,6 +33,7 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+tmp
 
 # Build directories
 bin/

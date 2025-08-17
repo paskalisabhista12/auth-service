@@ -1,8 +1,10 @@
 package db
 
 import (
-    "gorm.io/driver/postgres"
-    "gorm.io/gorm"
+	"log"
+
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 var DB *gorm.DB
@@ -13,5 +15,6 @@ func Connect(dsn string) error {
         return err
     }
     DB = database
+	log.Println("✅ Connected to Postgres")
     return nil
 }
