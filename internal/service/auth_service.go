@@ -81,8 +81,10 @@ func (s *authService) Login(email, password string) (string, error) {
 
 	// Generate JWT
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user_id": user.ID,
-		"exp":     time.Now().Add(24 * time.Hour).Unix(),
+		"first_name": user.FirstName,
+		"last_name":  user.LastName,
+		"email":      user.Email,
+		"exp":        time.Now().Add(12 * time.Hour).Unix(),
 	})
 
 	signed, err := token.SignedString([]byte(secret))
@@ -102,7 +104,7 @@ func (s *authService) Login(email, password string) (string, error) {
 		return "", exception.ErrInternal
 	}
 
-	if err := redis.Set(signed, string(jsonValue), 3600*time.Second); err != nil {
+	if err := redis.Set(signed, string(jsonValue), 12*3600*time.Second); err != nil {
 		return "", exception.ErrInternal
 	}
 
