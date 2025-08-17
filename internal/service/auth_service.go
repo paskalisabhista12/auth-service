@@ -8,6 +8,7 @@ import (
 	repository "auth-service/internal/repository"
 	exception "auth-service/pkg/utils/exception"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -19,7 +20,7 @@ import (
 type AuthService interface {
 	Register(req requestDTO.RegisterRequest) error
 	Login(email, password string) (string, error)
-	Check(authToken string) (string, error)
+	Verify(authToken string) (string, error)
 }
 
 type authService struct {
@@ -111,10 +112,16 @@ func (s *authService) Login(email, password string) (string, error) {
 	return signed, nil
 }
 
-func (s *authService) Check(authToken string) (string, error) {
+func (s *authService) Verify(authToken string) (string, error) {
 	authToken = strings.TrimSpace(authToken)
 	if authToken == "" {
 		return "", exception.NewUnauthorizedBusinessException("Authorization token is required")
+	}
+
+	secret := config.LoadConfig().JwtSecret
+	_, err := VerifyToken(authToken, secret)
+	if err != nil {
+		return "", err
 	}
 
 	data, err := redis.Rdb.Get(redis.Ctx, authToken).Result()
@@ -123,4 +130,33 @@ func (s *authService) Check(authToken string) (string, error) {
 	}
 
 	return data, nil
+}
+
+func VerifyToken(tokenString string, secret string) (jwt.MapClaims, error) {
+	// Parse token
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Make sure the signing method is HMAC
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, exception.NewUnauthorizedBusinessException(
+				fmt.Sprintf("Unexpected signing method: %v", token.Header["alg"]),
+			)
+		}
+		return []byte(secret), nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Validate token
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		if exp, ok := claims["exp"].(float64); ok {
+			if time.Unix(int64(exp), 0).Before(time.Now()) {
+				return nil, exception.NewUnauthorizedBusinessException("Token expired")
+			}
+		}
+		return claims, nil
+	}
+
+	return nil, exception.NewUnauthorizedBusinessException("Token invalid")
 }

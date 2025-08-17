@@ -30,7 +30,7 @@ func (ac *AuthController) RegisterRoutes(r *gin.RouterGroup) {
 	{
 		authGroup.POST("/register", ac.Register)
 		authGroup.POST("/login", ac.Login)
-		authGroup.GET("/check", ac.Check)
+		authGroup.GET("/verify", ac.Verify)
 	}
 }
 
@@ -70,7 +70,7 @@ func (ac *AuthController) Login(c *gin.Context) {
 	response.Success(c, http.StatusOK, gin.H{"authToken": token})
 }
 
-func (ac *AuthController) Check(c *gin.Context) {
+func (ac *AuthController) Verify(c *gin.Context) {
 	authHeader := c.GetHeader("Authorization")
 
 	if authHeader == "" {
@@ -85,7 +85,7 @@ func (ac *AuthController) Check(c *gin.Context) {
 	}
 	token := parts[1]
 
-	data, err := ac.authService.Check(token)
+	data, err := ac.authService.Verify(token)
 	if err != nil {
 		c.Error(err)
 		return
@@ -96,5 +96,5 @@ func (ac *AuthController) Check(c *gin.Context) {
 		panic(err)
 	}
 
-	response.Success(c, http.StatusCreated, gin.H{"user": userResponse}, "Token is valid")
+	response.Success(c, http.StatusOK, gin.H{"user": userResponse}, "Token is valid")
 }
