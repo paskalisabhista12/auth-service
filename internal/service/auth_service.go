@@ -22,14 +22,17 @@ type AuthService interface {
 	Login(email, password string) (string, error)
 	Verify(authToken string) (string, error)
 	Logout(authToken string) error
+	EnforceAuthorization(userEmail string, service string, endpoint string, httpMethod string) error
 }
 
 type authService struct {
-	repo repository.UserRepository
+	userRepo     repository.UserRepository
+	roleRepo     repository.RoleRepository
+	endpointRepo repository.EndpointRepository
 }
 
-func NewAuthService(repo repository.UserRepository) AuthService {
-	return &authService{repo}
+func NewAuthService(userRepo repository.UserRepository, roleRepo repository.RoleRepository, endpointRepo repository.EndpointRepository) AuthService {
+	return &authService{userRepo, roleRepo, endpointRepo}
 }
 
 func (s *authService) Register(req requestDTO.RegisterRequest) error {
@@ -41,7 +44,7 @@ func (s *authService) Register(req requestDTO.RegisterRequest) error {
 	}
 
 	// Check if user already exists
-	_, err := s.repo.FindByEmail(strings.TrimSpace(user.Email))
+	_, err := s.userRepo.FindByEmail(strings.TrimSpace(user.Email))
 	if err == nil {
 		return exception.NewConflictBusinessException("User already exists")
 	}
@@ -55,7 +58,7 @@ func (s *authService) Register(req requestDTO.RegisterRequest) error {
 	user.Password = string(hashedPassword)
 
 	// Save user
-	if _, err := s.repo.Create(user); err != nil {
+	if _, err := s.userRepo.Create(user); err != nil {
 		return exception.NewInternal("Failed to save user")
 	}
 
@@ -65,10 +68,17 @@ func (s *authService) Register(req requestDTO.RegisterRequest) error {
 
 func (s *authService) Login(email, password string) (string, error) {
 	// Find user by email
-	user, err := s.repo.FindByEmail(strings.TrimSpace(email))
+	user, err := s.userRepo.FindByEmail(strings.TrimSpace(email))
 	if err != nil || user.ID == 0 {
 		return "", exception.NewUnauthorizedBusinessException("Invalid email or password")
 	}
+
+	var roleNames []string
+	for _, r := range user.Roles {
+		roleNames = append(roleNames, r.Name)
+	}
+
+	roleNamesString := strings.Join(roleNames, "|") // e.g. "SUPERADMIN|ADMIN|etc"
 
 	// Compare password
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
@@ -86,6 +96,7 @@ func (s *authService) Login(email, password string) (string, error) {
 		"first_name": user.FirstName,
 		"last_name":  user.LastName,
 		"email":      user.Email,
+		"roles":      roleNamesString,
 		"exp":        time.Now().Add(12 * time.Hour).Unix(),
 	})
 
@@ -99,6 +110,7 @@ func (s *authService) Login(email, password string) (string, error) {
 			"first_name": user.FirstName,
 			"last_name":  user.LastName,
 			"email":      user.Email,
+			"roles":      roleNamesString,
 		}}
 
 	jsonValue, err := json.Marshal(value)
@@ -157,6 +169,40 @@ func (s *authService) Logout(authToken string) error {
 	return nil
 }
 
+func (s *authService) EnforceAuthorization(userEmail string, service string, path string, httpMethod string) error {
+	/*
+		Get user roles
+	*/
+	user, err := s.userRepo.FindByEmail(userEmail)
+	if err != nil {
+		return exception.NewUnauthorizedBusinessException("Invalid email or password")
+	}
+	roleIds := extractRoleIDs(user.Roles)
+
+	/*
+		Check endpoint in DB and extract the needed permission to access the endpoint
+	*/
+	endpoint, err := s.endpointRepo.FindByServicePathAndHttpMethod(service, path, httpMethod)
+	if err != nil {
+		return exception.NewNotFound("Endpoint not found")
+	}
+	requiredPermission := endpoint.Permission
+
+	/*
+		Extract permissions from roles
+	*/
+	permissions, _ := s.roleRepo.GetPermissionsByRoleIds(roleIds)
+
+	/*
+		Verify endpoint permission to the user privilege
+	*/
+	isAllowed := containsPermission(permissions, requiredPermission)
+	if !isAllowed {
+		return exception.NewUnauthorizedBusinessException("User has no permission to access this endpoint")
+	}
+	return nil
+}
+
 func verifyToken(tokenString string, secret string) (jwt.MapClaims, error) {
 	// Parse token
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
@@ -184,4 +230,21 @@ func verifyToken(tokenString string, secret string) (jwt.MapClaims, error) {
 	}
 
 	return nil, exception.NewUnauthorizedBusinessException("Token invalid")
+}
+
+func extractRoleIDs(roles []model.Role) []int {
+	ids := make([]int, len(roles))
+	for i, r := range roles {
+		ids[i] = int(r.RoleID)
+	}
+	return ids
+}
+
+func containsPermission(permissions []model.Permission, permission model.Permission) bool {
+	for _, item := range permissions {
+		if item.PermissionID == permission.PermissionID {
+			return true
+		}
+	}
+	return false
 }

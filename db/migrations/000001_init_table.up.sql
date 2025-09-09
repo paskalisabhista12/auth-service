@@ -35,3 +35,13 @@ CREATE TABLE user_roles (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (role_id) REFERENCES roles(role_id) ON DELETE CASCADE
 );
+
+CREATE TABLE endpoints (
+    endpoint_id SERIAL PRIMARY KEY,
+    service VARCHAR(255),
+    path VARCHAR(255) NOT NULL,
+    http_method VARCHAR(10) NOT NULL,
+    permission_id INT NOT NULL,
+    FOREIGN KEY (permission_id) REFERENCES permissions(permission_id) ON DELETE CASCADE
+);
+

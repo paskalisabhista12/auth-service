@@ -2,6 +2,7 @@ package repository
 
 import (
 	model "auth-service/internal/model"
+
 	"gorm.io/gorm"
 )
 
@@ -27,7 +28,7 @@ func (r *userRepository) FindAll() ([]model.User, error) {
 
 func (r *userRepository) FindByEmail(email string) (model.User, error) {
 	var user model.User
-	result := r.db.Where("email = ?", email).First(&user)
+	result := r.db.Preload("Roles").Where("email = ?", email).First(&user)
 	return user, result.Error
 }
 

@@ -1,7 +1,8 @@
 package responseDto
 
 type UserResponse struct {
-	FirstName  string `json:"first_name"`
+	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
-	Email string `json:"email"`
+	Email     string `json:"email"`
+	Roles     string `json:"roles"`
 }

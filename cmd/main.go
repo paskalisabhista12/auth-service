@@ -28,9 +28,11 @@ func main() {
 	}
 	// Initialize repositories
 	userRepo := repository.NewUserRepository(db.DB)
+	roleRepo := repository.NewRoleRepository(db.DB)
+	endpointRepo := repository.NewEndpointRepository(db.DB)
 
 	// Initialize services
-	authService := service.NewAuthService(userRepo)
+	authService := service.NewAuthService(userRepo, roleRepo, endpointRepo)
 
 	// Initialize controllers
 	authController := controller.NewAuthController(authService)
