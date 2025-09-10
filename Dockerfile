@@ -3,25 +3,26 @@ FROM golang:1.24.5 AS builder
 
 WORKDIR /app
 
-# Cache dependencies first
+# Copy go.mod & go.sum first (dependency cache)
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy the whole project
+# Copy the rest of the source
 COPY . .
 
-# Build statically linked binary
-RUN CGO_ENABLED=0 GOOS=linux go build -o auth-service ./cmd/main.go
+# ✅ Force static build (no libc dependency)
+ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
+RUN go build -o auth-service -ldflags="-w -s" ./cmd/main.go
 
 # ---------- Runtime stage ----------
 FROM alpine:3.19
 
 WORKDIR /app
 
-# Copy binary from builder stage
+# Copy binary from builder stage only
 COPY --from=builder /app/auth-service .
 
-# Run as non-root for security
+# Run as non-root for safety
 RUN adduser -D appuser
 USER appuser
 
