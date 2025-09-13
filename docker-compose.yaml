@@ -7,11 +7,11 @@ services:
             dockerfile: Dockerfile
         container_name: auth-service
         restart: always
-        ports: # <-- use this instead of expose
-            - "8080:8080"
+        ports:
+            - "8080"
         environment:
-            - DATABASE_URL=postgres://postgres:postgres@db:5432/auth_db?sslmode=disable
-            - REDIS_ADDR=redis:6379
+            - DATABASE_URL=${DATABASE_URL}
+            - REDIS_ADDR=${REDIS_ADDR}
         depends_on:
             - db
             - redis
@@ -27,7 +27,7 @@ services:
             POSTGRES_PASSWORD: postgres
             POSTGRES_DB: auth_db
         ports:
-            - "5433:5432" # host:container (host 5433 → container 5432)
+            - "5433:5432"
         networks:
             - app-network
 
@@ -36,7 +36,7 @@ services:
         container_name: redis
         restart: always
         ports:
-            - "6380:6379" # host:container (host 6380 → container 6379)
+            - "6380:6379"
         networks:
             - app-network
 
