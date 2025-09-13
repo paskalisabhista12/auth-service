@@ -242,6 +242,9 @@ func extractRoleIDs(roles []model.Role) []int {
 
 func containsPermission(permissions []model.Permission, permission model.Permission) bool {
 	for _, item := range permissions {
+		if item.Name == "ALL" { // By default, every endpoint is bypassed if the user has the 'ALL' permission (which should come from the SUPERADMIN role).
+			return true
+		}
 		if item.PermissionID == permission.PermissionID {
 			return true
 		}
