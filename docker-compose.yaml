@@ -48,7 +48,7 @@ services:
                 "-path",
                 "/migrations",
                 "-database",
-                "postgres://postgres:postgres@db:5432/auth_db?sslmode=disable",
+                "${DATABASE_URL}",
                 "up",
             ]
         volumes:
