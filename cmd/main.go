@@ -14,13 +14,7 @@ import (
 )
 
 func main() {
-	// Initialize slog logger
-	logger := slog.New(
-		slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		}),
-	)
-	slog.SetDefault(logger)
+	config.InitiateLogger()
 
 	// Load config
 	cfg := config.LoadConfig()
@@ -68,8 +62,6 @@ func main() {
 	{
 		authController.RegisterRoutes(api)
 	}
-	// Run server
-	slog.Info("server started", "port", cfg.AppPort)
 
 	if err := r.Run(":" + cfg.AppPort); err != nil {
 		slog.Error("failed to start server",
@@ -77,4 +69,6 @@ func main() {
 		)
 		os.Exit(1)
 	}
+
+	slog.Info("server started", "port", cfg.AppPort)
 }

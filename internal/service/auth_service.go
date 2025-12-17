@@ -9,11 +9,13 @@ import (
 	"auth-service/pkg/utils/exception"
 	"encoding/json"
 	"fmt"
+	"log/slog"
+	"strings"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
-	"strings"
-	"time"
 )
 
 type AuthService interface {
@@ -199,6 +201,10 @@ func (s *authService) EnforceAuthorization(userEmail string, service string, pat
 	if !isAllowed {
 		return exception.NewUnauthorizedBusinessException("User has no permission to access this endpoint")
 	}
+	slog.Info("Authorized to access", "endpoint", gin.H{
+		"method":   httpMethod,
+		"path": service + path,
+	})
 	return nil
 }
 
