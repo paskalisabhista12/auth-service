@@ -5,6 +5,7 @@ import (
 	"auth-service/internal/controller"
 	"auth-service/internal/infra/db"
 	"auth-service/internal/infra/redis"
+	"auth-service/internal/logger"
 	"auth-service/internal/middleware"
 	"auth-service/internal/repository"
 	"auth-service/internal/service"
@@ -14,7 +15,7 @@ import (
 )
 
 func main() {
-	config.InitiateLogger()
+	logger.Init()
 
 	// Load config
 	cfg := config.LoadConfig()
@@ -55,6 +56,7 @@ func main() {
 		gin.Recovery(),
 		middlewares.SlogLogger(),
 		middlewares.ErrorHandler(),
+		middlewares.TransactionIDMiddleware(),
 	)
 
 	// Register routes

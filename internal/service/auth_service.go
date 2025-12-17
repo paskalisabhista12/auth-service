@@ -9,7 +9,6 @@ import (
 	"auth-service/pkg/utils/exception"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"strings"
 	"time"
 
@@ -201,10 +200,6 @@ func (s *authService) EnforceAuthorization(userEmail string, service string, pat
 	if !isAllowed {
 		return exception.NewUnauthorizedBusinessException("User has no permission to access this endpoint")
 	}
-	slog.Info("Authorized to access", "endpoint", gin.H{
-		"method":   httpMethod,
-		"path": service + path,
-	})
 	return nil
 }
 

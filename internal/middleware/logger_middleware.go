@@ -17,7 +17,7 @@ func SlogLogger() gin.HandlerFunc {
 		latency := time.Since(start)
 		status := c.Writer.Status()
 
-		slog.Info("http request",
+		slog.InfoContext(c.Request.Context(), "http request",
 			"method", method,
 			"path", path,
 			"status", status,

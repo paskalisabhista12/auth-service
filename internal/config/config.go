@@ -42,15 +42,3 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
-
-func InitiateLogger() {
-	logger := slog.New(
-		slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		}),
-	).With(
-		"pid", os.Getpid(),
-	)
-
-	slog.SetDefault(logger)
-}

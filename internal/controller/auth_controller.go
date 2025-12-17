@@ -8,9 +8,11 @@ import (
 	"auth-service/pkg/utils/exception"
 	"auth-service/pkg/utils/response"
 	"encoding/json"
-	"github.com/gin-gonic/gin"
+	"log/slog"
 	"net/http"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
 type AuthController struct {
@@ -153,6 +155,12 @@ func (ac *AuthController) Introspect(c *gin.Context) {
 		c.Error(err)
 		return
 	}
+
+	slog.InfoContext(c.Request.Context(), "authorized to access", "endpoint", gin.H{
+		"method":  req.Method,
+		"service": req.Service,
+		"path":    req.Endpoint,
+	})
 
 	/*
 		Attach user info into X-User headers
