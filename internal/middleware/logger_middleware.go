@@ -21,8 +21,8 @@ func SlogLogger() gin.HandlerFunc {
 			"method", method,
 			"path", path,
 			"status", status,
-			"latency_ms", latency.Milliseconds(),
-			"client_ip", c.ClientIP(),
+			"latencyMs", latency.Milliseconds(),
+			"clientIp", c.ClientIP(),
 		)
 	}
 }

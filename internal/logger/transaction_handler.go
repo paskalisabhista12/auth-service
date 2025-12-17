@@ -16,7 +16,7 @@ func (h *trxHandler) Enabled(ctx context.Context, level slog.Level) bool {
 
 func (h *trxHandler) Handle(ctx context.Context, r slog.Record) error {
 	if trxID, ok := ctx.Value(middlewares.TrxIDKey).(string); ok {
-		r.AddAttrs(slog.String("transaction_id", trxID))
+		r.AddAttrs(slog.String("masterTransactionId", trxID))
 	}
 	return h.next.Handle(ctx, r)
 }
