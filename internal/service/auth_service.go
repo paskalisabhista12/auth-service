@@ -18,11 +18,11 @@ import (
 )
 
 type AuthService interface {
-	Register(req requestDTO.RegisterRequest) error
-	Login(email, password string) (string, error)
-	Verify(authToken string) (string, error)
-	Logout(authToken string) error
-	EnforceAuthorization(userEmail string, service string, endpoint string, httpMethod string) error
+	Register(c *gin.Context,req requestDTO.RegisterRequest) error
+	Login(c *gin.Context, email, password string) (string, error)
+	Verify(c *gin.Context, authToken string) (string, error)
+	Logout(c *gin.Context, authToken string) error
+	EnforceAuthorization(c *gin.Context, userEmail string, service string, endpoint string, httpMethod string) error
 }
 
 type authService struct {
@@ -35,7 +35,7 @@ func NewAuthService(userRepo repository.UserRepository, roleRepo repository.Role
 	return &authService{userRepo, roleRepo, endpointRepo}
 }
 
-func (s *authService) Register(req requestDTO.RegisterRequest) error {
+func (s *authService) Register(c *gin.Context, req requestDTO.RegisterRequest) error {
 	user := model.User{
 		FirstName: req.FirstName,
 		LastName:  req.LastName,
@@ -66,7 +66,7 @@ func (s *authService) Register(req requestDTO.RegisterRequest) error {
 
 }
 
-func (s *authService) Login(email, password string) (string, error) {
+func (s *authService) Login(c *gin.Context, email, password string) (string, error) {
 	// Find user by email
 	user, err := s.userRepo.FindByEmail(strings.TrimSpace(email))
 	if err != nil || user.ID == 0 {
@@ -125,7 +125,7 @@ func (s *authService) Login(email, password string) (string, error) {
 	return signed, nil
 }
 
-func (s *authService) Verify(authToken string) (string, error) {
+func (s *authService) Verify(c *gin.Context, authToken string) (string, error) {
 	authToken = strings.TrimSpace(authToken)
 	if authToken == "" {
 		return "", exception.NewUnauthorizedBusinessException("Authorization token is required")
@@ -145,7 +145,7 @@ func (s *authService) Verify(authToken string) (string, error) {
 	return data, nil
 }
 
-func (s *authService) Logout(authToken string) error {
+func (s *authService) Logout(c *gin.Context, authToken string) error {
 	authToken = strings.TrimSpace(authToken)
 	if authToken == "" {
 		return exception.NewUnauthorizedBusinessException("Authorization token is required")
@@ -169,7 +169,7 @@ func (s *authService) Logout(authToken string) error {
 	return nil
 }
 
-func (s *authService) EnforceAuthorization(userEmail string, service string, path string, httpMethod string) error {
+func (s *authService) EnforceAuthorization(c *gin.Context, userEmail string, service string, path string, httpMethod string) error {
 	/*
 		Get user roles
 	*/

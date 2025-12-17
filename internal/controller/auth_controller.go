@@ -46,7 +46,7 @@ func (ac *AuthController) Register(c *gin.Context) {
 		return
 	}
 
-	if err := ac.authService.Register(req); err != nil {
+	if err := ac.authService.Register(c, req); err != nil {
 		c.Error(err)
 		return
 	}
@@ -65,7 +65,7 @@ func (ac *AuthController) Login(c *gin.Context) {
 		return
 	}
 
-	token, err := ac.authService.Login(req.Email, req.Password)
+	token, err := ac.authService.Login(c, req.Email, req.Password)
 	if err != nil {
 		c.Error(err)
 		return
@@ -89,7 +89,7 @@ func (ac *AuthController) Verify(c *gin.Context) {
 	}
 	token := parts[1]
 
-	data, err := ac.authService.Verify(token)
+	data, err := ac.authService.Verify(c, token)
 	if err != nil {
 		c.Error(err)
 		return
@@ -129,7 +129,7 @@ func (ac *AuthController) Introspect(c *gin.Context) {
 	}
 	token := parts[1]
 
-	data, err := ac.authService.Verify(token)
+	data, err := ac.authService.Verify(c, token)
 	if err != nil {
 		c.Error(err)
 		return
@@ -144,7 +144,7 @@ func (ac *AuthController) Introspect(c *gin.Context) {
 	/*
 		Create user role_permission check
 	*/
-	err = ac.authService.EnforceAuthorization(userResponse.Email, req.Service, req.Endpoint, req.Method)
+	err = ac.authService.EnforceAuthorization(c, userResponse.Email, req.Service, req.Endpoint, req.Method)
 	if err != nil {
 		c.Error(err)
 		return
@@ -185,7 +185,7 @@ func (ac *AuthController) Logout(c *gin.Context) {
 	}
 	token := parts[1]
 
-	err := ac.authService.Logout(token)
+	err := ac.authService.Logout(c, token)
 	if err != nil {
 		c.Error(err)
 		return
