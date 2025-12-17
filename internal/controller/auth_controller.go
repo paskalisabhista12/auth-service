@@ -71,7 +71,7 @@ func (ac *AuthController) Login(c *gin.Context) {
 		return
 	}
 
-	response.Success(c, http.StatusOK, gin.H{"authToken": token})
+	response.Success(c, http.StatusOK, gin.H{"auth_token": token})
 }
 
 func (ac *AuthController) Verify(c *gin.Context) {
