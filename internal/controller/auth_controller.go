@@ -3,10 +3,10 @@ package controller
 import (
 	requestDto "auth-service/internal/model/dto/request"
 	responseDto "auth-service/internal/model/dto/response"
-	service "auth-service/internal/service"
+	"auth-service/internal/service"
 	"auth-service/pkg/utils"
-	exception "auth-service/pkg/utils/exception"
-	response "auth-service/pkg/utils/response"
+	"auth-service/pkg/utils/exception"
+	"auth-service/pkg/utils/response"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"net/http"

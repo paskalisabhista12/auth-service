@@ -9,5 +9,5 @@ type Endpoint struct {
 	HTTPMethod   string `gorm:"column:http_method" json:"http_method"`
 	PermissionID int    `gorm:"column:permission_id" json:"permission_id"`
 
-	Permission   Permission `gorm:"foreignKey:PermissionID;references:PermissionID" json:"permission"`
+	Permission Permission `gorm:"foreignKey:PermissionID;references:PermissionID" json:"permission"`
 }

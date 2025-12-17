@@ -1,20 +1,19 @@
 package service
 
 import (
-	config "auth-service/internal/config"
+	"auth-service/internal/config"
 	"auth-service/internal/infra/redis"
-	model "auth-service/internal/model"
-	requestDTO "auth-service/internal/model/dto/request"
-	repository "auth-service/internal/repository"
-	exception "auth-service/pkg/utils/exception"
+	"auth-service/internal/model"
+	"auth-service/internal/model/dto/request"
+	"auth-service/internal/repository"
+	"auth-service/pkg/utils/exception"
 	"encoding/json"
 	"fmt"
-	"strings"
-	"time"
-
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
+	"strings"
+	"time"
 )
 
 type AuthService interface {

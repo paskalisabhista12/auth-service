@@ -2,10 +2,9 @@ package redis
 
 import (
 	"context"
-	"log"
-	"time"
-
 	"github.com/redis/go-redis/v9"
+	"log/slog"
+	"time"
 )
 
 var (
@@ -28,7 +27,7 @@ func InitRedis(addr string, password string) error {
 		return err
 	}
 
-	log.Println("✅ Connected to Redis")
+	slog.Info("connected to Redis")
 	return nil
 }
 

@@ -1,11 +1,10 @@
 package middlewares
 
 import (
-	exception "auth-service/pkg/utils/exception"
-	response "auth-service/pkg/utils/response"
-	"net/http"
-
+	"auth-service/pkg/utils/exception"
+	"auth-service/pkg/utils/response"
 	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 func ErrorHandler() gin.HandlerFunc {

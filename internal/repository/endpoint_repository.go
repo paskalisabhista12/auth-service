@@ -1,8 +1,7 @@
 package repository
 
 import (
-	model "auth-service/internal/model"
-
+	"auth-service/internal/model"
 	"gorm.io/gorm"
 )
 

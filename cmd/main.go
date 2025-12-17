@@ -1,31 +1,48 @@
 package main
 
 import (
-	config "auth-service/internal/config"
-	controller "auth-service/internal/controller"
-	db "auth-service/internal/infra/db"
-	redis "auth-service/internal/infra/redis"
-	middlewares "auth-service/internal/middleware"
-	repository "auth-service/internal/repository"
-	service "auth-service/internal/service"
-	"log"
-
+	"auth-service/internal/config"
+	"auth-service/internal/controller"
+	"auth-service/internal/infra/db"
+	"auth-service/internal/infra/redis"
+	"auth-service/internal/middleware"
+	"auth-service/internal/repository"
+	"auth-service/internal/service"
 	"github.com/gin-gonic/gin"
+	"log/slog"
+	"os"
 )
 
 func main() {
+	// Initialize slog logger
+	logger := slog.New(
+		slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}),
+	)
+	slog.SetDefault(logger)
+
 	// Load config
 	cfg := config.LoadConfig()
-	log.Print("Environment: ", cfg.Environment)
+	slog.Info("config loaded",
+		"environment", cfg.Environment)
 
 	// Connect to DB
 	if err := db.Connect(cfg.DatabaseURL); err != nil {
-		log.Fatal("❌ Failed to connect to database:", err)
+		slog.Error("failed to connect to database",
+			"error", err,
+		)
+		os.Exit(1)
 	}
 
+	// Connect to Redis
 	if err := redis.InitRedis(cfg.RedisAddress, cfg.RedisPassword); err != nil {
-		log.Fatal("❌ Failed to connect to redis:", err)
+		slog.Error("failed to connect to redis",
+			"error", err,
+		)
+		os.Exit(1)
 	}
+
 	// Initialize repositories
 	userRepo := repository.NewUserRepository(db.DB)
 	roleRepo := repository.NewRoleRepository(db.DB)
@@ -38,17 +55,26 @@ func main() {
 	authController := controller.NewAuthController(authService)
 
 	// Create Gin instance
-	r := gin.Default()
-
-	// Apply middleware
-	r.Use(middlewares.ErrorHandler())
+	gin.SetMode(gin.ReleaseMode)
+	r := gin.New()
+	r.Use(
+		gin.Recovery(),
+		middlewares.SlogLogger(),
+		middlewares.ErrorHandler(),
+	)
 
 	// Register routes
 	api := r.Group("/api")
 	{
-		authController.RegisterRoutes(api) // All user routes require auth
+		authController.RegisterRoutes(api)
 	}
-
 	// Run server
-	r.Run(":" + cfg.AppPort)
+	slog.Info("server started", "port", cfg.AppPort)
+
+	if err := r.Run(":" + cfg.AppPort); err != nil {
+		slog.Error("failed to start server",
+			"error", err,
+		)
+		os.Exit(1)
+	}
 }
